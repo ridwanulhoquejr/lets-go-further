@@ -45,7 +45,7 @@ func main() {
 
 	// Initialize a new logger which writes messages to the standard out stream,
 	// prefixed with the current date and time.
-	logger := log.New(os.Stdout, "Let's Go: ", log.Ldate|log.Ltime)
+	logger := log.New(os.Stdout, "Let's Go -> ", log.Ldate|log.Ltime)
 
 	// Declare an instance of the application struct, containing the config struct and
 	// the logger.

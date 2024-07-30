@@ -14,8 +14,10 @@ import (
 func (app *application) routes() *httprouter.Router {
 
 	r := httprouter.New()
-	r.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
+
+	r.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
 	r.HandlerFunc(http.MethodGet, "/v1/movies/get/:id", app.showMovieHandler)
+	r.HandlerFunc(http.MethodPost, "/v1/movies/create", app.createMovieHandler)
 
 	return r
 }
