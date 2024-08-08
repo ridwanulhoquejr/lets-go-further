@@ -14,7 +14,28 @@ func (app *application) createMovieHandler(
 ) {
 	fmt.Println("Create new movie handler")
 
-	// body := httprouter.ParamsFromContext(r.Body())
+	var input struct {
+		ID        int       `json:"id"`
+		CreatedAt time.Time `json:"created_at"` // - tag will hide this field in respone object
+		Title     string    `json:"title"`
+		Runtime   int       `json:"runtime"`
+		Genres    []string  `json:"genres"`
+		Year      int       `json:"year,omitempty,string"`
+	}
+
+	// use our readJSON helper method
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// fmt.Fprintf(w, "%+v\n", input)
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": input}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 }
 
 func (app *application) showMovieHandler(

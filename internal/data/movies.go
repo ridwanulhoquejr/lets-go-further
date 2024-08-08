@@ -4,7 +4,7 @@ import "time"
 
 type Movie struct {
 	ID        int       `json:"id"`
-	CreatedAt time.Time `json:"-"` // - tag will hide this field in respone object
+	CreatedAt time.Time `json:"created_at,-"` // - tag will hide this field in respone object
 	Title     string    `json:"title"`
 	Runtime   int       `json:"runtime"`
 	Genres    []string  `json:"genres"`
