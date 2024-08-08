@@ -15,6 +15,10 @@ func (app *application) routes() *httprouter.Router {
 
 	r := httprouter.New()
 
+	// we use our error helper mthod to override the built-in `NotFound` & `methodNotAllowed` error responses.
+	r.NotFound = http.HandlerFunc(app.notFoundResponse)
+	r.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
+
 	r.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
 	r.HandlerFunc(http.MethodGet, "/v1/movies/get/:id", app.showMovieHandler)
 	r.HandlerFunc(http.MethodPost, "/v1/movies/create", app.createMovieHandler)

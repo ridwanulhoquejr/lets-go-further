@@ -9,6 +9,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type envelope map[string]interface{}
+
 //! writeJSON helper method for our application
 //
 // Define a writeJSON() helper for sending responses. This takes the destination
@@ -18,7 +20,7 @@ import (
 func (app *application) writeJSON(
 	w http.ResponseWriter,
 	status int,
-	data any,
+	data envelope,
 	headers http.Header) error {
 
 	js, err := json.Marshal(data)
