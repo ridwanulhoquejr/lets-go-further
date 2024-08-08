@@ -37,8 +37,8 @@ func (app *application) showMovieHandler(
 		Title:     "Breaking Bad",
 		Runtime:   100,
 		Genres:    []string{"War", "Drug", "Fight"},
-		// Year:      2012,
-		Version: 10,
+		Year:      2012,
+		Version:   1,
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
