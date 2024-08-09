@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ridwanulhoquejr/lets-go-further/internal/data"
+	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
 )
 
 func (app *application) createMovieHandler(
@@ -20,13 +21,33 @@ func (app *application) createMovieHandler(
 		Title     string    `json:"title"`
 		Runtime   int       `json:"runtime"`
 		Genres    []string  `json:"genres"`
-		Year      int       `json:"year,omitempty,string"`
+		Year      int32     `json:"year,omitempty"`
 	}
 
 	// use our readJSON helper method
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// Copy the values from the input struct to a new Movie struct.
+	movie := &data.Movie{
+		ID:        9,
+		Title:     input.Title,
+		Year:      input.Year,
+		Runtime:   input.Runtime,
+		Genres:    input.Genres,
+		CreatedAt: time.Now(),
+	}
+
+	// Initialize a new Validator instance.
+	v := validator.New()
+
+	// Call the ValidateMovie() function and return a response containing the errors if
+	// any of the checks fail.
+	if data.ValidateMovie(v, movie); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
