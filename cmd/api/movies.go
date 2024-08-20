@@ -13,15 +13,14 @@ func (app *application) createMovieHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
 	fmt.Println("Create new movie handler")
 
 	var input struct {
-		ID        int       `json:"id"`
-		CreatedAt time.Time `json:"created_at"` // - tag will hide this field in respone object
-		Title     string    `json:"title"`
-		Runtime   int       `json:"runtime"`
-		Genres    []string  `json:"genres"`
-		Year      int32     `json:"year,omitempty"`
+		Title   string   `json:"title"`
+		Runtime int      `json:"runtime"`
+		Genres  []string `json:"genres"`
+		Year    int32    `json:"year,omitempty"`
 	}
 
 	// use our readJSON helper method
@@ -33,12 +32,10 @@ func (app *application) createMovieHandler(
 
 	// Copy the values from the input struct to a new Movie struct.
 	movie := &data.Movie{
-		ID:        9,
-		Title:     input.Title,
-		Year:      input.Year,
-		Runtime:   input.Runtime,
-		Genres:    input.Genres,
-		CreatedAt: time.Now(),
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: input.Runtime,
+		Genres:  input.Genres,
 	}
 
 	// Initialize a new Validator instance.
@@ -51,8 +48,24 @@ func (app *application) createMovieHandler(
 		return
 	}
 
+	// Call the Insert() method on our movies model, passing in a pointer to the
+	// validated movie struct. This will create a record in the database and update the
+	// movie struct with the system-generated information.
+	err = app.models.Movie.Insert(movie)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// When sending a HTTP response, we want to include a Location header to let the
+	// client know which URL they can find the newly-created resource at. We make an
+	// empty http.Header map and then use the Set() method to add a new Location header,
+	// interpolating the system-generated ID for our new movie in the URL.
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
 	// fmt.Fprintf(w, "%+v\n", input)
-	err = app.writeJSON(w, http.StatusOK, envelope{"movie": input}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, headers)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

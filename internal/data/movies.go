@@ -1,8 +1,10 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
 )
 
@@ -14,6 +16,63 @@ type Movie struct {
 	Genres    []string  `json:"genres"`
 	Year      int32     `json:"year,omitempty,string"`
 	Version   int       `json:"version"`
+}
+
+type MovieModel struct {
+	db *sql.DB
+}
+
+type MockMovieModel struct{}
+
+// Add a placeholder method for inserting a new record in the movies table.
+func (m MovieModel) Insert(movie *Movie) error {
+
+	query :=
+		`
+		INSERT INTO movie (title, year, runtime, genres)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, version
+		`
+
+	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+
+	return m.db.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+}
+
+// Add a placeholder method for fetching a specific record from the movies table.
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+// Add a placeholder method for updating a specific record in the movies table.
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+// Add a placeholder method for deleting a specific record from the movies table.
+func (m MovieModel) Delete(id int64) error {
+	return nil
+}
+
+// Mock
+func (m MockMovieModel) Insert(movie *Movie) error {
+	// Mock the action...
+	return nil
+}
+func (m MockMovieModel) Get(id int64) (*Movie, error) {
+	// Mock the action...
+	return &Movie{}, nil
+
+}
+func (m MockMovieModel) Update(movie *Movie) error {
+	// Mock the action...
+	return nil
+
+}
+func (m MockMovieModel) Delete(id int64) error {
+	// Mock the action...
+	return nil
+
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
