@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/ridwanulhoquejr/lets-go-further/internal/data"
 	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
@@ -18,7 +18,7 @@ func (app *application) createMovieHandler(
 
 	var input struct {
 		Title   string   `json:"title"`
-		Runtime int      `json:"runtime"`
+		Runtime int32    `json:"runtime"`
 		Genres  []string `json:"genres"`
 		Year    int32    `json:"year,omitempty"`
 	}
@@ -77,28 +77,28 @@ func (app *application) showMovieHandler(
 ) {
 
 	id, err := app.readIDParam(r)
-	if err != nil || id <= 0 {
+	if err != nil {
 		app.notFoundResponse(w, r)
 		return
 	}
 
-	// Create a new instance of the Movie struct, containing the ID we extracted from
-	// the URL and some dummy data. Also notice that we deliberately haven't set a
-	// value for the Year field.
-
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Breaking Bad",
-		Runtime:   100,
-		Genres:    []string{"War", "Drug", "Fight"},
-		Year:      2012,
-		Version:   1,
+	movie, err := app.models.Movie.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+			return
+		default:
+			app.serverErrorResponse(w, r, err)
+			app.logger.Printf("Error in movies handler: %s", err)
+			return
+		}
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
 		app.logger.Println(err)
 		app.serverErrorResponse(w, r, err)
+		return
 	}
 }

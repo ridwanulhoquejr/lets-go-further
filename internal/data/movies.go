@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -9,13 +10,13 @@ import (
 )
 
 type Movie struct {
-	ID        int       `json:"id"`
+	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at,-"` // - tag will hide this field in respone object
 	Title     string    `json:"title"`
-	Runtime   int       `json:"runtime"`
+	Runtime   int32     `json:"runtime,string"`
 	Genres    []string  `json:"genres"`
-	Year      int32     `json:"year,omitempty,string"`
-	Version   int       `json:"version"`
+	Year      int32     `json:"year,omitempty"`
+	Version   int32     `json:"version"`
 }
 
 type MovieModel struct {
@@ -41,7 +42,44 @@ func (m MovieModel) Insert(movie *Movie) error {
 
 // Add a placeholder method for fetching a specific record from the movies table.
 func (m MovieModel) Get(id int64) (*Movie, error) {
-	return nil, nil
+
+	// if the id is < 1 then return error
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	var movie Movie
+
+	query :=
+		` 	SELECT * 
+					from movie
+			WHERE 
+				id = $1
+		`
+	// execute and unpacked the data
+	//! caution: scan order should match the db columns order,
+	// otherwise will get a `[pq: cannot convert]` eroor
+	err := m.db.QueryRow(query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+
+			return nil, err
+		}
+	}
+
+	return &movie, nil
 }
 
 // Add a placeholder method for updating a specific record in the movies table.
@@ -54,7 +92,7 @@ func (m MovieModel) Delete(id int64) error {
 	return nil
 }
 
-// Mock
+// ! Mock Movie methods
 func (m MockMovieModel) Insert(movie *Movie) error {
 	// Mock the action...
 	return nil

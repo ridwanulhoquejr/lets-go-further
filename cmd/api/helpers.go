@@ -128,7 +128,7 @@ func (app *application) writeJSON(
 	return nil
 }
 
-func (app *application) readIDParam(r *http.Request) (int, error) {
+func (app *application) readIDParam(r *http.Request) (int64, error) {
 
 	// get the params from the request!
 	params := httprouter.ParamsFromContext(r.Context())
@@ -136,7 +136,7 @@ func (app *application) readIDParam(r *http.Request) (int, error) {
 	// parse the id param into int64 from the string
 	// id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
 	// ParseInt in same as Atoi but with just int
-	id, err := strconv.Atoi(params.ByName("id"))
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
 
 	if err != nil {
 		return 0, errors.New("invalid id parameter")
