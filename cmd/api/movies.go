@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -98,6 +99,73 @@ func (app *application) showMovieHandler(
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
 		app.logger.Println(err)
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+}
+
+func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	// extract id for r.body
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// get the movie from Get methtod using id that extracted above
+	movie, err := app.models.Movie.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(sql.ErrNoRows, err):
+			app.notFoundResponse(w, r)
+			return
+		default:
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+	}
+
+	// create payload input
+	var input struct {
+		Title   string   `json:"title"`
+		Runtime int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+		Year    int32    `json:"year,omitempty"`
+	}
+
+	// decode the payload using our readJSON helper
+	err = app.readJSON(w, r, &input)
+
+	// Copy the values of decoded payload field in movie fetch by Get(id)
+	movie.Title = input.Title
+	movie.Runtime = input.Runtime
+	movie.Genres = input.Genres
+	movie.Year = input.Year
+
+	// Initialize a new Validator instance.
+	v := validator.New()
+
+	// Call the ValidateMovie() function and return a response containing the errors if
+	// any of the checks fail.
+	if data.ValidateMovie(v, movie); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// now we can proceed with actual update task
+	err = app.models.Movie.Update(movie)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// header for product path url
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	// convert our response to json by using writeJSON helper method
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, headers)
+	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}

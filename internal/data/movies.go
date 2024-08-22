@@ -13,7 +13,7 @@ type Movie struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at,-"` // - tag will hide this field in respone object
 	Title     string    `json:"title"`
-	Runtime   int32     `json:"runtime,string"`
+	Runtime   int32     `json:"runtime"`
 	Genres    []string  `json:"genres"`
 	Year      int32     `json:"year,omitempty"`
 	Version   int32     `json:"version"`
@@ -84,7 +84,28 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 
 // Add a placeholder method for updating a specific record in the movies table.
 func (m MovieModel) Update(movie *Movie) error {
-	return nil
+
+	query :=
+		`UPDATE movie
+		 SET 
+		 	title = $1,  
+		 	year = $2, 
+			runtime = $3, 
+			genres = $4, 
+			version = version +1
+		 WHERE id = $5
+		 RETURNING version`
+
+	// create args slice for placeholder params
+	args := []interface{}{
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.ID,
+	}
+
+	return m.db.QueryRow(query, args...).Scan(&movie.Version)
 }
 
 // Add a placeholder method for deleting a specific record from the movies table.
