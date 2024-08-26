@@ -127,20 +127,35 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	// create payload input
 	var input struct {
-		Title   string   `json:"title"`
-		Runtime int32    `json:"runtime"`
+		Title   *string  `json:"title"`
+		Runtime *int32   `json:"runtime"`
 		Genres  []string `json:"genres"`
-		Year    int32    `json:"year,omitempty"`
+		Year    *int32   `json:"year,omitempty"`
 	}
+	// app.logger.Printf("They year before readJSON is %d", *input.Year)
 
 	// decode the payload using our readJSON helper
 	err = app.readJSON(w, r, &input)
 
 	// Copy the values of decoded payload field in movie fetch by Get(id)
-	movie.Title = input.Title
-	movie.Runtime = input.Runtime
-	movie.Genres = input.Genres
-	movie.Year = input.Year
+
+	// for partial updates, we will check wheather provided json is nil or not,
+	// as this is now a pointer type this will be nil if not provider
+	if input.Title != nil {
+		movie.Title = *input.Title
+	}
+
+	if input.Runtime != nil {
+		movie.Runtime = *input.Runtime
+	}
+
+	if input.Genres != nil {
+		movie.Genres = input.Genres
+	}
+
+	if input.Year != nil {
+		movie.Year = *input.Year
+	}
 
 	// Initialize a new Validator instance.
 	v := validator.New()
