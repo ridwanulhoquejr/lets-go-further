@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -38,6 +39,55 @@ func (m MovieModel) Insert(movie *Movie) error {
 	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
 
 	return m.db.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+}
+
+// GetAll() mehtod for returning list of data
+func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+
+	query :=
+		`	SELECT id, created_at, title, year, runtime, genres, version
+			FROM movie
+			ORDER BY id
+		`
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	rows, err := m.db.QueryContext(ctx, query)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	movies := []*Movie{}
+
+	// Use rows.Next to iterate through the rows in the resultset.
+	for rows.Next() {
+		var movie Movie
+
+		err := rows.Scan(
+			&movie.ID,
+			&movie.CreatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.Runtime,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		movies = append(movies, &movie)
+	}
+
+	// When the rows.Next() loop has finished, call rows.Err() to retrieve any error
+	// that was encountered during the iteration.
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return movies, nil
 }
 
 // Add a placeholder method for fetching a specific record from the movies table.
@@ -147,6 +197,9 @@ func (m MovieModel) Delete(id int64) error {
 func (m MockMovieModel) Insert(movie *Movie) error {
 	// Mock the action...
 	return nil
+}
+func (m MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+	return nil, nil
 }
 func (m MockMovieModel) Get(id int64) (*Movie, error) {
 	// Mock the action...
