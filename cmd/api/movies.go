@@ -54,13 +54,13 @@ func (app *application) listMovieHandler(w http.ResponseWriter, r *http.Request)
 	}
 	// Dump the contents of the input struct in a HTTP response.
 	// fmt.Fprintf(w, "\n%+v\n", input)
-	movies, err := app.models.Movie.GetAll(input.Title, input.Genres, input.Filters)
+	movies, metadata, err := app.models.Movie.GetAll(input.Title, input.Genres, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movies}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movies, "metadata": metadata}, nil)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return

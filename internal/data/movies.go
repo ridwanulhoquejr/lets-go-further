@@ -43,38 +43,48 @@ func (m MovieModel) Insert(movie *Movie) error {
 }
 
 // GetAll() mehtod for returning list of data
-func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+func (m MovieModel) GetAll(title string, genres []string, f Filters) ([]*Movie, Metadata, error) {
 
 	query := fmt.Sprintf(
 		`
 		SELECT 
-			id, created_at, title, year, runtime, genres, version
+			 count(*) OVER(), id, created_at, title, year, runtime, genres, version
 		FROM movie
 		WHERE 
 			(to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
 		AND 
 			(genres @> $2 OR $2 = '{}')
-		ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
+		ORDER BY %s %s, id ASC 
+		LIMIT $3 OFFSET $4
+		`, f.sortColumn(), f.sortDirection())
 
 	// create context with one mint timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 
 	defer cancel()
 
-	rows, err := m.db.QueryContext(ctx, query, title, pq.Array(genres))
+	// As our SQL query now has quite a few placeholder parameters, let's collect the
+	// values for the placeholders in a slice. Notice here how we call the limit() and
+	// offset() methods on the Filters struct to get the appropriate values for the
+	// LIMIT and OFFSET clauses.
+	args := []any{title, pq.Array(genres), f.limit(), f.offset()}
+
+	rows, err := m.db.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, nil
 	}
 	defer rows.Close()
 
 	movies := []*Movie{}
+	totalRecords := 0
 
 	// Use rows.Next to iterate through the rows in the resultset.
 	for rows.Next() {
 		var movie Movie
 
 		err := rows.Scan(
+			&totalRecords,
 			&movie.ID,
 			&movie.CreatedAt,
 			&movie.Title,
@@ -84,7 +94,7 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 			&movie.Version,
 		)
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, nil
 		}
 
 		movies = append(movies, &movie)
@@ -93,10 +103,12 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 	// When the rows.Next() loop has finished, call rows.Err() to retrieve any error
 	// that was encountered during the iteration.
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{}, nil
 	}
 
-	return movies, nil
+	metadata := calculateMetadata(totalRecords, f.Page, f.PageSize)
+
+	return movies, metadata, nil
 }
 
 // Add a placeholder method for fetching a specific record from the movies table.
@@ -207,8 +219,8 @@ func (m MockMovieModel) Insert(movie *Movie) error {
 	// Mock the action...
 	return nil
 }
-func (m MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	return nil, nil
+func (m MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
+	return nil, Metadata{}, nil
 }
 func (m MockMovieModel) Get(id int64) (*Movie, error) {
 	// Mock the action...
