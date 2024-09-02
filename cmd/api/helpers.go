@@ -34,6 +34,8 @@ func (app *application) readCSV(qs url.Values, key string, defaultValue []string
 	// Extract the value from the query string.
 	csv := qs.Get(key)
 
+	app.logger.Printf("query Genres are: %s", csv)
+
 	if csv == "" {
 		return defaultValue
 	}

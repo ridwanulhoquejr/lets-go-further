@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -44,15 +45,23 @@ func (m MovieModel) Insert(movie *Movie) error {
 // GetAll() mehtod for returning list of data
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
 
-	query :=
-		`	SELECT id, created_at, title, year, runtime, genres, version
-			FROM movie
-			ORDER BY id
+	query := fmt.Sprintf(
 		`
+		SELECT 
+			id, created_at, title, year, runtime, genres, version
+		FROM movie
+		WHERE 
+			(to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
+		AND 
+			(genres @> $2 OR $2 = '{}')
+		ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
+
+	// create context with one mint timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+
 	defer cancel()
 
-	rows, err := m.db.QueryContext(ctx, query)
+	rows, err := m.db.QueryContext(ctx, query, title, pq.Array(genres))
 
 	if err != nil {
 		return nil, err

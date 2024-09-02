@@ -9,6 +9,9 @@ migrate_cli:
 migrate_force:
 	migrate -path ./migrations -database "postgres://greenlight:1234@localhost/greenlight?sslmode=disable" force $(version_of_migration)
 
+migrate_up:
+	migrate -path ./migrations -database "postgres://greenlight:1234@localhost/greenlight?sslmode=disable" up
+
 migrate_current_version:
 	migrate -path ./migrations -database "postgres://greenlight:1234@localhost/greenlight" version
 
