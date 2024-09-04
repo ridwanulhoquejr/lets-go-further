@@ -11,7 +11,7 @@ import (
 // we use httprouter's -> *httprouter.Router
 
 // then we can replace the Handler value from the &Server in maing.go to app.routes() method
-func (app *application) routes() *httprouter.Router {
+func (app *application) routes() http.Handler {
 
 	r := httprouter.New()
 
@@ -26,5 +26,5 @@ func (app *application) routes() *httprouter.Router {
 	r.HandlerFunc(http.MethodPatch, "/v1/movie/:id", app.updateMovieHandler)
 	r.HandlerFunc(http.MethodDelete, "/v1/movie/:id", app.deleteMovieHandler)
 
-	return r
+	return app.recoverPanic(r)
 }
