@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"time"
 )
 
 func (app *application) healthCheckHandler(
@@ -18,10 +17,6 @@ func (app *application) healthCheckHandler(
 			"version":     version,
 		},
 	}
-
-	app.logger.Println("Starting long-running request")
-	time.Sleep(3 * time.Second)
-	app.logger.Println("Completed long-running request after 4 sec")
 
 	err := app.writeJSON(w, http.StatusOK, env, nil)
 	if err != nil {
