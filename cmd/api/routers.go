@@ -26,5 +26,8 @@ func (app *application) routes() http.Handler {
 	r.HandlerFunc(http.MethodPatch, "/v1/movie/:id", app.updateMovieHandler)
 	r.HandlerFunc(http.MethodDelete, "/v1/movie/:id", app.deleteMovieHandler)
 
+	// User route handler
+	r.HandlerFunc(http.MethodPost, "/v1/users", app.createUserHandler)
+
 	return app.recoverPanic(r)
 }

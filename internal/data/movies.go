@@ -214,30 +214,6 @@ func (m MovieModel) Delete(id int64) error {
 	return nil
 }
 
-// ! Mock Movie methods
-func (m MockMovieModel) Insert(movie *Movie) error {
-	// Mock the action...
-	return nil
-}
-func (m MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
-	return nil, Metadata{}, nil
-}
-func (m MockMovieModel) Get(id int64) (*Movie, error) {
-	// Mock the action...
-	return &Movie{}, nil
-
-}
-func (m MockMovieModel) Update(movie *Movie) error {
-	// Mock the action...
-	return nil
-
-}
-func (m MockMovieModel) Delete(id int64) error {
-	// Mock the action...
-	return nil
-
-}
-
 func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 	// Use the Check() method to execute our validation checks. This will add the

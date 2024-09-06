@@ -28,27 +28,23 @@ type Models struct {
 		the Models struct can work with any type that implements these methods,
 		whether it's a real database model or a mock model for testing.
 	*/
-	Movie interface {
-		Insert(movie *Movie) error
-		Get(id int64) (*Movie, error)
-		GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error)
-		Update(movie *Movie) error
-		Delete(id int64) error
-	}
+	// Movie interface {
+	// 	Insert(movie *Movie) error
+	// 	Get(id int64) (*Movie, error)
+	// 	GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error)
+	// 	Update(movie *Movie) error
+	// 	Delete(id int64) error
+	// }
+	Movie MovieModel
+	User  UserModel
 	// other db models should go here
 }
 
 // constructor for instanciate the model
-func NewModels(db *sql.DB) Models {
-	return Models{
+func NewModels(db *sql.DB) *Models {
+	return &Models{
 		Movie: MovieModel{db: db},
+		User:  UserModel{db: db},
 		// other db models should go here
-	}
-}
-
-// constructor for mockModel
-func NewMockModel() Models {
-	return Models{
-		Movie: MockMovieModel{},
 	}
 }

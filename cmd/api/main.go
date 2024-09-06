@@ -42,7 +42,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
-	models data.Models // in this field, we can access all the db models
+	models *data.Models // in this field, we can access all the db models
 }
 
 func main() {
