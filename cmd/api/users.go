@@ -66,7 +66,21 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	// Launch a goroutine which runs an anonymous function that sends the welcome email.
+	app.background(func() {
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		if err != nil {
+			// Importantly, if there is an error sending the email then we use the
+			// app.logger.PrintError() helper to manage it, instead of the
+			// app.serverErrorResponse() helper like before.
+			app.logger.Println(err)
+		}
+	})
+
+	// Note that we also change this to send the client a 202 Accepted status code.
+	// This status code indicates that the request has been accepted for processing, but
+	// the processing has not been completed.
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

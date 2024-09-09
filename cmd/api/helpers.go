@@ -16,6 +16,20 @@ import (
 
 type envelope map[string]interface{}
 
+// background helper method to run in a seprate Go-Routine
+func (app *application) background(fn func()) {
+	// launch a go routine
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.Println(err)
+			}
+		}()
+
+		fn()
+	}()
+}
+
 // The readString() helper returns a string value from the query string, or the provided
 // default value if no matching key could be found.
 func (app *application) readString(qs url.Values, key string, defaultValue string) string {
