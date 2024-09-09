@@ -64,6 +64,7 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 			app.serverErrorResponse(w, r, err)
 			return
 		}
+		return
 	}
 
 	// Launch a goroutine which runs an anonymous function that sends the welcome email.

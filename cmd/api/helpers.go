@@ -18,8 +18,16 @@ type envelope map[string]interface{}
 
 // background helper method to run in a seprate Go-Routine
 func (app *application) background(fn func()) {
+
+	// Increment the WaitGroup counter.
+	app.wg.Add(1)
+
 	// launch a go routine
 	go func() {
+
+		// Use defer to decrement the WaitGroup counter before the goroutine returns.
+		defer app.wg.Done()
+
 		defer func() {
 			if err := recover(); err != nil {
 				app.logger.Println(err)
