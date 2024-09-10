@@ -35,16 +35,18 @@ type Models struct {
 	// 	Update(movie *Movie) error
 	// 	Delete(id int64) error
 	// }
-	Movie MovieModel
-	User  UserModel
+	Movie  MovieModel
+	User   UserModel
+	Tokens TokenModel
 	// other db models should go here
 }
 
 // constructor for instanciate the model
 func NewModels(db *sql.DB) *Models {
 	return &Models{
-		Movie: MovieModel{db: db},
-		User:  UserModel{db: db},
+		Movie:  MovieModel{db: db},
+		User:   UserModel{db: db},
+		Tokens: TokenModel{db: db},
 		// other db models should go here
 	}
 }
