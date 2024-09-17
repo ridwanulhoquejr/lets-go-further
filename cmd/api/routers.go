@@ -28,6 +28,7 @@ func (app *application) routes() http.Handler {
 
 	// User route handler
 	r.HandlerFunc(http.MethodPost, "/v1/users", app.createUserHandler)
+	r.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
 
 	return app.recoverPanic(r)
 }
