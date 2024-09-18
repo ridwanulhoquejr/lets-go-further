@@ -9,6 +9,71 @@ import (
 	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
 )
 
+// authentication handler
+func (app *application) authenticationHandler(w http.ResponseWriter, r *http.Request) {
+
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// validate email
+	v := validator.New()
+
+	// email and password validation
+	data.ValidateEmail(v, input.Email)
+	data.ValidatePasswordPlaintext(v, input.Password)
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// if Validated, now we have to look up on the database based on provided Email
+	// and check the password provided is matched!
+	user, err := app.models.User.GetByEmail(input.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	match, err := user.Password.Matches(input.Password)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	if !match {
+		app.invalidCredentialsResponse(w, r)
+		return
+	}
+
+	// Otherwise, if the password is correct, we generate a new token with a 24-hour
+	// expiry time and the scope 'authentication'
+	token, err := app.models.Tokens.New(user.ID, 24*time.Hour, data.ScopeAuthentication)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusCreated, envelope{"token": token}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+}
+
 func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Parse the plaintext activation token from the request body.

@@ -29,6 +29,8 @@ func (app *application) routes() http.Handler {
 	// User route handler
 	r.HandlerFunc(http.MethodPost, "/v1/users", app.createUserHandler)
 	r.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
+	r.HandlerFunc(http.MethodPost, "/v1/users/authentication", app.authenticationHandler)
 
-	return app.recoverPanic(r)
+	// Use the authenticate() middleware on all requests.
+	return app.recoverPanic(app.authenticate(r))
 }
