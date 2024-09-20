@@ -10,6 +10,39 @@ import (
 	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
 )
 
+// Create a new requireAuthenticatedUser() middleware to check that a user is not
+// anonymous.
+func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		//todo: this is not working, when it tried to get the user from context -> panic () missing user value in request context
+		if user.IsAnonymous() {
+			app.authenticationRequiredResponse(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// require activated user
+func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+		// Check that a user is activated.
+		if !user.Activated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+	// Wrap fn with the requireAuthenticatedUser() middleware before returning it.
+	return app.requireAuthenticatedUser(fn)
+
+}
+
 // authenticate middleware
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -19,11 +52,13 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		// Get the value from the header
 		authorizatonHeader := r.Header.Get("Authorization")
 
+		app.logger.Printf("authorization header: %s", authorizatonHeader)
 		// If there is no Authorization header found, use the contextSetUser() helper
 		// that we just made to add the AnonymousUser to the request context. Then we
 		// call the next handler in the chain and return without executing any of the
 		// code below.
 		if authorizatonHeader == "" {
+			app.logger.Printf("inside \"\" header")
 			app.contextSetUser(r, data.AnonymousUser)
 			next.ServeHTTP(w, r)
 			return

@@ -20,11 +20,13 @@ func (app *application) routes() http.Handler {
 	r.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
 
 	r.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
-	r.HandlerFunc(http.MethodPost, "/v1/movie", app.createMovieHandler)
-	r.HandlerFunc(http.MethodGet, "/v1/movie", app.listMovieHandler)
-	r.HandlerFunc(http.MethodGet, "/v1/movie/:id", app.showMovieHandler)
-	r.HandlerFunc(http.MethodPatch, "/v1/movie/:id", app.updateMovieHandler)
-	r.HandlerFunc(http.MethodDelete, "/v1/movie/:id", app.deleteMovieHandler)
+
+	// movie route
+	r.HandlerFunc(http.MethodPost, "/v1/movie", app.requireActivatedUser(app.createMovieHandler))
+	r.HandlerFunc(http.MethodGet, "/v1/movie", app.requireActivatedUser(app.listMovieHandler))
+	r.HandlerFunc(http.MethodGet, "/v1/movie/:id", app.requireActivatedUser(app.showMovieHandler))
+	r.HandlerFunc(http.MethodPatch, "/v1/movie/:id", app.requireActivatedUser(app.updateMovieHandler))
+	r.HandlerFunc(http.MethodDelete, "/v1/movie/:id", app.requireActivatedUser(app.deleteMovieHandler))
 
 	// User route handler
 	r.HandlerFunc(http.MethodPost, "/v1/users", app.createUserHandler)
