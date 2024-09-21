@@ -10,6 +10,32 @@ import (
 	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
 )
 
+// Note that the first parameter for the middleware function is the permission code that
+// we require the user to have.
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		// Retrieve the user from the request context.
+		user := app.contextGetUser(r)
+		// Get the slice of permissions for the user.
+		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+		// Check if the slice includes the required permission. If it doesn't, then
+		// return a 403 Forbidden response.
+		if !permissions.Include(code) {
+			app.notPermittedResponse(w, r)
+			return
+		}
+		// Otherwise they have the required permission so we call the next handler in
+		// the chain.
+		next.ServeHTTP(w, r)
+	}
+	// Wrap this with the requireActivatedUser() middleware before returning it.
+	return app.requireActivatedUser(fn)
+}
+
 // Create a new requireAuthenticatedUser() middleware to check that a user is not
 // anonymous.
 func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
@@ -52,13 +78,11 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		// Get the value from the header
 		authorizatonHeader := r.Header.Get("Authorization")
 
-		app.logger.Printf("authorization header: %s", authorizatonHeader)
 		// If there is no Authorization header found, use the contextSetUser() helper
 		// that we just made to add the AnonymousUser to the request context. Then we
 		// call the next handler in the chain and return without executing any of the
 		// code below.
 		if authorizatonHeader == "" {
-			app.logger.Printf("inside \"\" header")
 			app.contextSetUser(r, data.AnonymousUser)
 			next.ServeHTTP(w, r)
 			return

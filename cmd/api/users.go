@@ -201,6 +201,12 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	err = app.models.Permissions.AddForUser(user.ID, "movie:read")
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
 	// After the user record has been created in the database, generate a new activation
 	// token for the user.
 	token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)

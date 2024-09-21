@@ -22,11 +22,11 @@ func (app *application) routes() http.Handler {
 	r.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
 
 	// movie route
-	r.HandlerFunc(http.MethodPost, "/v1/movie", app.requireActivatedUser(app.createMovieHandler))
-	r.HandlerFunc(http.MethodGet, "/v1/movie", app.requireActivatedUser(app.listMovieHandler))
-	r.HandlerFunc(http.MethodGet, "/v1/movie/:id", app.requireActivatedUser(app.showMovieHandler))
-	r.HandlerFunc(http.MethodPatch, "/v1/movie/:id", app.requireActivatedUser(app.updateMovieHandler))
-	r.HandlerFunc(http.MethodDelete, "/v1/movie/:id", app.requireActivatedUser(app.deleteMovieHandler))
+	r.HandlerFunc(http.MethodPost, "/v1/movie", app.requirePermission("movie:write", app.createMovieHandler))
+	r.HandlerFunc(http.MethodGet, "/v1/movie", app.requirePermission("movie:read", app.listMovieHandler))
+	r.HandlerFunc(http.MethodGet, "/v1/movie/:id", app.requirePermission("movie:read", app.showMovieHandler))
+	r.HandlerFunc(http.MethodPatch, "/v1/movie/:id", app.requirePermission("movie:write", app.updateMovieHandler))
+	r.HandlerFunc(http.MethodDelete, "/v1/movie/:id", app.requirePermission("movie:write", app.deleteMovieHandler))
 
 	// User route handler
 	r.HandlerFunc(http.MethodPost, "/v1/users", app.createUserHandler)

@@ -19,8 +19,7 @@ const userContextKey = contextKey("user")
 // User struct added to the context. Note that we use our userContextKey constant as the
 // key.
 func (app *application) contextSetUser(r *http.Request, user *data.User) *http.Request {
-	app.logger.Printf("user in contextSetUser: %+v", *user)
-	app.logger.Printf("is anonymous?: %s", (user == data.AnonymousUser))
+
 	ctx := context.WithValue(r.Context(), userContextKey, user)
 	return r.WithContext(ctx)
 }
@@ -30,11 +29,11 @@ func (app *application) contextSetUser(r *http.Request, user *data.User) *http.R
 // value in the context, and if it doesn't exist it will firmly be an 'unexpected' error.
 // As we discussed earlier in the book, it's OK to panic in those circumstances.
 func (app *application) contextGetUser(r *http.Request) *data.User {
+
 	user, ok := r.Context().Value(userContextKey).(*data.User)
-	app.logger.Printf("user in contextGetUser: %+v", user)
-	app.logger.Printf("OK in contextGetUser: %s", ok)
 	if !ok {
 		panic("missing user value in request context")
 	}
+
 	return user
 }
