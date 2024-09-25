@@ -34,5 +34,5 @@ func (app *application) routes() http.Handler {
 	r.HandlerFunc(http.MethodPost, "/v1/users/authentication", app.authenticationHandler)
 
 	// Use the authenticate() middleware on all requests.
-	return app.recoverPanic(app.authenticate(r))
+	return app.recoverPanic(app.enableCORS(app.authenticate(r)))
 }

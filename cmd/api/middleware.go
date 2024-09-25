@@ -10,6 +10,16 @@ import (
 	"github.com/ridwanulhoquejr/lets-go-further/internal/validator"
 )
 
+// CORS middleware
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// this will enable all the other origin to recieve data
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Note that the first parameter for the middleware function is the permission code that
 // we require the user to have.
 func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
